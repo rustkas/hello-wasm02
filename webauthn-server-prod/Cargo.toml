@@ -1,0 +1,36 @@
+[workspace]
+# ↑ Standalone-проект, не часть workspace hello-wasm02.
+
+[package]
+name = "webauthn-server-prod"
+version = "0.1.0"
+edition = "2021"
+description = "Production-grade WebAuthn server with webauthn-rs, SQLite, and server-side sessions"
+
+[dependencies]
+# HTTP + async runtime
+axum = "0.7"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tower-http = { version = "0.5", features = ["fs", "cors", "set-header"] }
+tower-sessions = "0.13"
+
+# WebAuthn — реализует серверную часть протокола
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
+
+# CBOR-парсинг для демонстрации содержимого attestationObject
+ciborium = "0.2"
+
+# SQLite
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Misc
+uuid = { version = "1", features = ["v4", "serde"] }
+url = "2"
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22"
+rand = "0.8"
+dotenvy = "0.15.7"

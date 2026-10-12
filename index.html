@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebAssembly Demo</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        #app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px 60px 20px;
+        }
+        #loading {
+            padding: 40px 20px;
+            text-align: center;
+            color: #8b949e;
+            font-family: ui-monospace, monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="loading">Загрузка WASM-модуля…</div>
+    </div>
+
+    <script type="module">
+        import init, { run } from './pkg/hello_wasm02.js';
+
+        try {
+            await init();
+            document.getElementById('loading')?.remove();
+            run();
+        } catch (err) {
+            console.error('Ошибка инициализации WASM:', err);
+            document.getElementById('app').innerHTML =
+                '<pre style="color:#f85149;font-family:ui-monospace,monospace;font-size:12px;">' +
+                'Ошибка загрузки: ' + String(err) + '</pre>';
+        }
+    </script>
+</body>
+</html>

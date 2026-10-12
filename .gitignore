@@ -1,0 +1,16 @@
+# Rust
+/target
+/pkg
+Cargo.lock
+
+# Node
+/node_modules
+package-lock.json
+
+# Vite
+/dist
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/

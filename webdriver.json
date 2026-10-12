@@ -1,0 +1,25 @@
+{
+  "goog:chromeOptions": {
+    "args": [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+
+      "--enable-unsafe-webgpu",
+      "--enable-unsafe-swiftshader",
+
+      "--enable-features=Vulkan,UseSkiaRenderer",
+      "--use-vulkan=swiftshader",
+      "--disable-vulkan-surface",
+      "--ignore-gpu-blocklist",
+
+      "--use-angle=swiftshader"
+    ]
+  },
+  "moz:firefoxOptions": {
+    "binary": "/usr/bin/firefox-esr",
+    "args": [
+      "-headless",
+      "-no-remote"
+    ]
+  }
+}

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Production WebAuthn — Глава 41.02</title>
+<style>
+  body { font-family: system-ui; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+  h1 { margin: 0 0 0.25rem; }
+  .sub { color: #666; margin-bottom: 1.5rem; }
+  .sub code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
+  .panel { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  .panel h2 { margin: 0 0 0.6rem; font-size: 1rem; }
+  .panel.highlight { border: 2px solid #9b59b6; }
+  .panel.info { border: 2px solid #16a085; }
+  input { padding: 0.4rem 0.6rem; font-size: 1rem; border: 1px solid #ccc;
+          border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 0.4rem; }
+  button { padding: 0.45rem 1rem; font-size: 0.95rem; border: 1px solid #999;
+           border-radius: 4px; background: #f7f7f7; cursor: pointer; margin-right: 0.5rem; }
+  button:hover:not(:disabled) { background: #eee; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  pre { background: #f7f7f7; border: 1px solid #e0e0e0; padding: 0.6rem 0.8rem;
+        border-radius: 4px; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap;
+        max-height: 400px; overflow-y: auto; }
+  .note { font-size: 0.85rem; color: #666; margin: 0.5rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #121212; color: #e6e6e6; }
+    .panel { border-color: #333; background: #1e1e1e; }
+    input { background: #1e1e1e; color: #e6e6e6; border-color: #444; }
+    button { background: #262626; color: #e6e6e6; border-color: #444; }
+    button:hover:not(:disabled) { background: #333; }
+    pre { background: #1a1a1a; color: #9ed09e; border-color: #333; }
+    .sub code { background: #262626; }
+  }
+</style>
+</head>
+<body>
+<h1>Production WebAuthn — Глава 41.02</h1>
+<p class="sub">Сервер на Rust: <code>webauthn-rs</code> + <code>ciborium</code> +
+   <code>sqlx</code> (SQLite) + <code>tower-sessions</code>.
+   Открывайте <b>http://localhost:3030</b>.</p>
+
+<div class="panel highlight">
+  <h2>1. Регистрация passkey</h2>
+  <p class="note">Настоящая проверка attestation через webauthn-rs.
+     Плюс ручной парсинг <code>attestationObject</code> через ciborium —
+     покажем, что внутри: <code>fmt</code>, <code>aaguid</code>,
+     <code>credentialIdLength</code>, COSE-ключ.</p>
+  <input id="reg-username" placeholder="Логин" value="bob">
+  <input id="reg-display" placeholder="Отображаемое имя" value="Bob">
+  <button id="reg-btn">🔑 Зарегистрировать passkey</button>
+  <pre id="reg-out">—</pre>
+</div>
+
+<div class="panel highlight">
+  <h2>2. Вход с passkey</h2>
+  <p class="note">Криптографическая проверка подписи через
+     <code>webauthn-rs::finish_passkey_authentication</code>.
+     Если подпись неверна — сервер вернёт ошибку, а не <code>ok: true</code>.</p>
+  <input id="login-username" placeholder="Логин" value="bob">
+  <button id="login-btn">🔓 Войти</button>
+  <pre id="login-out">—</pre>
+</div>
+
+<div class="panel info">
+  <h2>3. Что нового по сравнению с главой 41.01</h2>
+  <ul style="font-size: 0.9rem; line-height: 1.6;">
+    <li><b>Attestation парсится через CBOR</b> — в ответе видно <code>fmt</code>, <code>aaguid</code>, длину credential_id, сводку COSE-ключа.</li>
+    <li><b>Подпись assertion проверяется криптографически</b> — если подделать <code>signature</code>, сервер отклонит вход.</li>
+    <li><b>Пользователи и passkeys в SQLite</b> — файл <code>webauthn.db</code> переживёт перезапуск сервера.</li>
+    <li><b>Сессии серверные</b> — состояние церемонии живёт в БД (<code>ceremonies</code>), а не в cookie.</li>
+  </ul>
+</div>
+
+<script type="module">
+function b64uToBytes(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+function bytesToB64u(bytes) {
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// ─── Регистрация ─────────────────────────────────────────────
+document.getElementById('reg-btn').addEventListener('click', async () => {
+  const out = document.getElementById('reg-out');
+  const username = document.getElementById('reg-username').value.trim();
+  const displayName = document.getElementById('reg-display').value.trim();
+  if (!username) { out.textContent = 'введите логин'; return; }
+  out.textContent = 'шаг 1/2: получаем challenge…';
+
+  try {
+    const beginResp = await fetch('/api/register/begin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ username, display_name: displayName }),
+    });
+    if (!beginResp.ok) {
+      const err = await beginResp.json();
+      out.textContent = '❌ ' + JSON.stringify(err);
+      return;
+    }
+    const { options } = await beginResp.json();
+
+    // ВАЖНО: webauthn-rs оборачивает options в { publicKey: {...} },
+    // как того требует спецификация WebAuthn Level 2. Раньше мы
+    // обращались к options.challenge напрямую — это undefined.
+    const publicKey = options.publicKey;
+
+    // Преобразуем base64url-поля в Uint8Array.
+    publicKey.challenge = b64uToBytes(publicKey.challenge);
+    publicKey.user.id = b64uToBytes(publicKey.user.id);
+    if (publicKey.excludeCredentials) {
+      publicKey.excludeCredentials = publicKey.excludeCredentials.map(c => ({
+        ...c, id: b64uToBytes(c.id),
+      }));
+    }
+
+    out.textContent = 'шаг 2/2: ждём подтверждения от аутентификатора…';
+
+    const credential = await navigator.credentials.create({ publicKey });
+
+    const finishBody = {
+      credential: {
+        id: credential.id,
+        rawId: bytesToB64u(new Uint8Array(credential.rawId)),
+        type: credential.type,
+        response: {
+          clientDataJSON: bytesToB64u(new Uint8Array(credential.response.clientDataJSON)),
+          attestationObject: bytesToB64u(new Uint8Array(credential.response.attestationObject)),
+          transports: credential.response.getTransports ? credential.response.getTransports() : [],
+        },
+      },
+    };
+
+    const finishResp = await fetch('/api/register/finish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(finishBody),
+    });
+    const result = await finishResp.json();
+    out.textContent = JSON.stringify(result, null, 2);
+  } catch (e) {
+    out.textContent = '❌ ' + e.message;
+  }
+});
+
+// ─── Вход ────────────────────────────────────────────────────
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const out = document.getElementById('login-out');
+  const username = document.getElementById('login-username').value.trim();
+  if (!username) { out.textContent = 'введите логин'; return; }
+  out.textContent = 'шаг 1/2: получаем challenge…';
+
+  try {
+    const beginResp = await fetch('/api/login/begin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ username }),
+    });
+    if (!beginResp.ok) {
+      const err = await beginResp.json();
+      out.textContent = '❌ ' + JSON.stringify(err);
+      return;
+    }
+    const { options } = await beginResp.json();
+
+    // То же самое: options.publicKey содержит challenge и
+    // allowCredentials.
+    const publicKey = options.publicKey;
+    publicKey.challenge = b64uToBytes(publicKey.challenge);
+    if (publicKey.allowCredentials) {
+      publicKey.allowCredentials = publicKey.allowCredentials.map(c => ({
+        ...c, id: b64uToBytes(c.id),
+      }));
+    }
+
+    out.textContent = 'шаг 2/2: ждём подтверждения…';
+
+    const assertion = await navigator.credentials.get({ publicKey });
+
+    const finishBody = {
+      credential: {
+        id: assertion.id,
+        rawId: bytesToB64u(new Uint8Array(assertion.rawId)),
+        type: assertion.type,
+        response: {
+          clientDataJSON: bytesToB64u(new Uint8Array(assertion.response.clientDataJSON)),
+          authenticatorData: bytesToB64u(new Uint8Array(assertion.response.authenticatorData)),
+          signature: bytesToB64u(new Uint8Array(assertion.response.signature)),
+          userHandle: assertion.response.userHandle
+            ? bytesToB64u(new Uint8Array(assertion.response.userHandle))
+            : null,
+        },
+      },
+    };
+
+    const finishResp = await fetch('/api/login/finish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(finishBody),
+    });
+    const result = await finishResp.json();
+    out.textContent = JSON.stringify(result, null, 2);
+  } catch (e) {
+    out.textContent = '❌ ' + e.message;
+  }
+});
+</script>
+</body>
+</html>

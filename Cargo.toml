@@ -1,0 +1,369 @@
+[package]
+name = "hello-wasm02"
+version = "0.1.0"
+edition = "2021"
+description = "Rust + web_sys starter"
+license = "MIT"
+repository = "https://github.com/rustkas/hello-wasm02"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+console_error_panic_hook = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde-wasm-bindgen = "0.6"
+gloo-timers = { version = "0.4", features = ["futures"] }
+futures = "0.3"
+base64 = "0.23"
+wasm-streams = "0.7"
+futures-util = "0.3"
+sha2 = "0.11.0"
+hex = "0.4"
+idb = "0.6"
+image = { version = "0.25", default-features = false, features = [
+    "png",
+    "jpeg",
+] }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    # Основные типы DOM
+    "Window",
+    "Document",
+    "Node",
+    "Element",
+    "HtmlElement",
+
+    # Поиск и создание
+    "NodeList",
+    "HtmlCollection",
+
+    # Атрибуты и классы
+    "DomTokenList",
+    "NamedNodeMap",
+
+    # События (базовые)
+    "Event",
+    "EventTarget",
+    "EventInit",
+    "InputEvent",
+
+    # События (специализированные)
+    "KeyboardEvent",
+    "MouseEvent",
+    "PointerEvent",
+
+    # Элементы формы
+    "HtmlInputElement",
+    "HtmlButtonElement",
+    "HtmlTextAreaElement",
+    "HtmlSelectElement",
+    "HtmlOptionElement",
+    "HtmlOptionsCollection",
+    "HtmlFormElement",
+
+    # Медиа-элементы
+    "HtmlImageElement",
+    "HtmlCanvasElement",
+    "HtmlVideoElement",
+    "HtmlAudioElement",
+
+    # Навигация и URL
+    "Location",
+    "Url",
+    "UrlSearchParams",
+    "History",
+    "PopStateEvent",
+    "PopStateEventInit",
+
+    # Storage
+    "Storage",
+    "StorageEvent",
+    "StorageEventInit",
+
+    # Navigation API (экспериментальный)
+    "Navigation",
+    "NavigateEvent",
+    "NavigationHistoryEntry",
+    "NavigationCurrentEntryChangeEvent",
+    "NavigationNavigateOptions",
+    "NavigationType",
+    "NavigationResult",
+    "NavigationHistoryBehavior",
+    "NavigationUpdateCurrentEntryOptions",
+
+    # Fetch API
+    "Headers",
+    "Request",
+    "RequestInit",
+    "RequestMode",
+    "Response",
+    "AbortController",
+    "AbortSignal",
+
+    "FormData",
+    "Blob",
+    "BlobPropertyBag",
+
+    "DomException",
+    "HtmlAnchorElement",
+    "ReadableStream",
+    "ReadableStreamDefaultReader",
+    "RequestCredentials",
+
+    "Worker",
+    "WorkerGlobalScope",
+    "DedicatedWorkerGlobalScope",
+    "Navigator",
+    "ServiceWorker",
+    "ServiceWorkerContainer",
+    "ServiceWorkerRegistration",
+    "MessageEvent",
+    "ErrorEvent",
+    "MessagePort",
+    "MessageEventInit",
+
+
+    "ReadableStreamDefaultController",
+    "ReadableStreamReadResult",
+    "WritableStream",
+    "WritableStreamDefaultWriter",
+    "WritableStreamDefaultController",
+    "TransformStream",
+    "TransformStreamDefaultController",
+    "QueuingStrategy",
+    "QueuingStrategyInit",
+
+    # File API (НОВЫЕ)
+    "File",
+    "FileList",
+    "FileReader",
+    "FileReaderSync",
+    "FilePropertyBag",
+    "DataTransfer",
+    "DragEvent",
+    "DragEventInit",
+    "ProgressEvent",
+
+    # 18.7 — Drag&Drop папок
+    "DataTransferItem",
+    "DataTransferItemList",
+    "FileSystemEntry",
+    "FileSystemDirectoryEntry",
+    "FileSystemFileEntry",
+    "FileSystemDirectoryReader",
+    "FileSystemEntriesCallback",
+
+    # 18.12 — хеширование
+    "SubtleCrypto",
+    "Crypto",
+
+    # 18.14 — прогресс загрузки через XHR
+    "XmlHttpRequest",
+    "XmlHttpRequestUpload",
+    "XmlHttpRequestEventTarget",
+
+    # 18.15 — File System Access API
+    "FileSystemFileHandle",
+    "FileSystemDirectoryHandle",
+    "FileSystemHandle",
+    "FileSystemWritableFileStream",
+    "FileSystemCreateWritableOptions",
+    "FileSystemRemoveOptions",
+
+    # 18.16 — Web Share
+    "ShareData",
+
+    # 18.17 — Cache, IndexedDB, OPFS
+    "Cache",
+    "CacheStorage",
+    "StorageManager",
+    "FileSystemGetDirectoryOptions",
+    "FileSystemGetFileOptions",
+
+    "MessageChannel",
+
+    "OffscreenCanvas",
+    "OffscreenCanvasRenderingContext2d",
+    "ImageBitmap",
+    "ImageBitmapOptions",
+    "ImageOrientation",
+    "HtmlProgressElement",
+    "HtmlSpanElement",
+    "XmlHttpRequestResponseType",
+    "HtmlHeadElement",
+    "FileSystemSyncAccessHandle",
+    "CanvasRenderingContext2d",
+    "ImageData",
+    "CssStyleDeclaration",
+    "CanvasGradient",
+    "TextMetrics",
+    "DomMatrix",
+    "DomRect",
+    "WorkerOptions",
+    "WorkerType",
+    "AudioBuffer",
+    "AudioBufferSourceNode",
+    "AudioDestinationNode",
+    "AudioNode",
+    "AudioContext",
+    "AudioParam",
+    "OfflineAudioContext",
+    "OscillatorNode",
+    "OscillatorType",
+
+    "WebGl2RenderingContext",
+    "WebGlProgram",
+    "WebGlShader",
+    "WebGlBuffer",
+    "WebGlTexture",
+    "WebGlUniformLocation",
+    "WebGlVertexArrayObject",
+
+
+    "MediaStream",
+    "MediaStreamTrack",
+    "MediaStreamTrackState",
+    "AudioWorkletNode",
+    "AnalyserNode",
+    "MediaStreamAudioSourceNode",
+    "AudioContextState",
+    "ResponseInit",
+
+    "ServiceWorkerState",
+    "ServiceWorkerUpdateViaCache",
+    "Client",
+    "Clients",
+    "WindowClient",
+    "ExtendableEvent",
+    "FetchEvent",
+    "ExtendableMessageEvent",
+    "ServiceWorkerGlobalScope",
+    "Performance",
+    "IdleDeadline",
+
+
+    "PerformanceEntry",
+    "PerformanceMark",
+    "PerformanceMeasure",
+    "PerformanceObserver",
+    "PerformanceObserverEntryList",
+    "PerformanceObserverInit",
+    "PerformanceResourceTiming",
+    "PerformanceNavigationTiming",
+
+    # Геолокация (глава 34)
+    "Geolocation",
+    "Position",
+    "PositionError",
+    "PositionOptions",
+    "Coordinates",
+    "VisibilityState",
+
+    # MediaDevices (глава 35)
+    "MediaDevices",
+    "MediaDeviceInfo",
+    "MediaDeviceKind",
+    "MediaStreamConstraints",
+    "MediaTrackConstraints",
+    "MediaTrackSettings",
+    "MediaTrackCapabilities",
+    "MediaTrackSupportedConstraints",
+    "MediaTrackConstraintSet",
+    "InputDeviceInfo",
+    "PermissionStatus",
+
+    # WebSocket (глава 36)
+    "WebSocket",
+    "BinaryType",
+    "CloseEvent",
+
+    "WebTransport",
+    "WebTransportOptions",
+    "WebTransportDatagramDuplexStream",
+    "WebTransportBidirectionalStream",
+    "WebTransportReceiveStream",
+    "WebTransportSendStream",
+    "WebTransportError",
+    "WebTransportHash",
+
+    # WebRTC (глава 45)
+    "RtcPeerConnection",
+    "RtcPeerConnectionState",
+    "RtcIceConnectionState",
+    "RtcIceGatheringState",
+    "RtcSessionDescription",
+    "RtcSessionDescriptionInit",
+    "RtcSdpType",
+    "RtcIceCandidate",
+    "RtcIceCandidateInit",
+    "RtcConfiguration",
+    "RtcIceServer",
+    "RtcDataChannel",
+    "RtcDataChannelInit",
+    "RtcDataChannelEvent",
+    "RtcDataChannelEventInit",
+    "RtcPeerConnectionIceEvent",
+    "CryptoKey",
+    "Clipboard",
+    "WebGlTransformFeedback",
+    "WebGlQuery",
+
+      # WebGPU (глава 44)
+    #
+    # В web-sys 0.3.105 смешанное соглашение:
+    #   - интерфейсы (типы-структуры) — CamelCase: Gpu, GpuAdapter, ...
+    #   - enum'ы (модули констант) — snake_case: gpu_buffer_usage, ...
+    "Gpu",
+    "GpuAdapter",
+    "GpuAdapterInfo",
+    "GpuDevice",
+    "GpuBuffer",
+    "GpuBufferDescriptor",
+    "GpuShaderModule",
+    "GpuShaderModuleDescriptor",
+    "GpuComputePipeline",
+    "GpuComputePipelineDescriptor",
+    "GpuPipelineLayout",
+    "GpuPipelineLayoutDescriptor",
+    "GpuBindGroup",
+    "GpuBindGroupDescriptor",
+    "GpuBindGroupLayout",
+    "GpuBindGroupLayoutDescriptor",
+    "GpuBindGroupEntry",
+    "GpuBindGroupLayoutEntry",
+    "GpuCommandEncoder",
+    "GpuCommandEncoderDescriptor",
+    "GpuCommandBuffer",
+    "GpuComputePassEncoder",
+    "GpuComputePassDescriptor",
+    "GpuQueue",
+    "GpuProgrammableStage",
+    "GpuPipelineDescriptorBase",
+    "GpuSupportedLimits",
+    "GpuSupportedFeatures",
+    "gpu_buffer_usage",
+    "gpu_map_mode",
+    
+    # Прочее
+    "console",
+]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
